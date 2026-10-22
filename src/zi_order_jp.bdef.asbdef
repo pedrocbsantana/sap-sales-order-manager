@@ -1,14 +1,41 @@
 managed implementation in class zbp_i_order_jp unique;
 strict ( 2 );
+with draft;
+
 
 define behavior for ZI_ORDER_JP alias Order
 persistent table zorder_jp
+draft table zorder_d_jp
 lock master
-authorization master ( instance )
-//etag master <field_name>
+total etag LastChangedAt
+authorization master ( none )
+etag master LocalLastChangedAt
 {
-  create ( authorization : global );
+  create;
   update;
   delete;
-  field ( readonly ) OrderId;
+  draft action Edit;
+  draft action Activate;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare
+  {
+    validation validateAmount;
+  }
+  field ( readonly : update ) OrderId;
+  field ( readonly ) CreatedAt, LastChangedAt, LocalLastChangedAt;
+  field ( mandatory ) CustomerName, Amount, CurrencyCode;
+  validation validateAmount on save { create; update; field Amount; }
+
+  mapping for zorder_jp
+    {
+      OrderId            = order_id;
+      CustomerName       = customer_name;
+      Amount             = amount;
+      CurrencyCode       = currency_code;
+      Status             = status;
+      CreatedAt          = created_at;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
 }
